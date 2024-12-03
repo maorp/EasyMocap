@@ -6,6 +6,8 @@ from functools import partial
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from rtmlib import Wholebody, Body
+import cv2
 
 from .layers import drop_path, to_2tuple, trunc_normal_
 
@@ -551,6 +553,10 @@ class MyViT(BaseTopDownModelCache, BaseKeypoints):
         self.model = model
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.model.to(self.device)
+        # self.wholebody = Wholebody(to_openpose=False,
+        #         mode='balanced',  # 'performance', 'lightweight', 'balanced'. Default: 'balanced'
+        #         backend='onnxruntime', device='cuda') 
+        self.body = Body(to_openpose=False, pose='rtmo', mode='performance', backend='onnxruntime', device='cuda')
 
     def dump(self, cachename, output):
         _output = output['output']
@@ -580,8 +586,15 @@ class MyViT(BaseTopDownModelCache, BaseKeypoints):
             else:
                 img = images[nv]
                 # TODO: add flip test
-                out = super().__call__(_bbox, img, imgnames[nv])
-                kpts = out['params']['keypoints']
+                # out = super().__call__(_bbox, img, imgnames[nv])
+                if isinstance(img, str):
+                    img = cv2.imread(img)
+                        # image = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
+                    # img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    # img = cv2.cvtColor(image, cv2.COLOR_BayerBG2BGR)
+                keypoints, scores = self.body(img)
+                kpts = np.dstack((keypoints,scores))
+                # kpts = out['params']['keypoints']
             if kpts.shape[-2] == 23:
                 kpts = self.coco23tobody25(kpts)
             elif kpts.shape[-2] == 17:

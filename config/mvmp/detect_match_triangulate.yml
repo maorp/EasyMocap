@@ -83,5 +83,5 @@ args:
     make_video:
       module: myeasymocap.io.video.MakeVideo
       args:
-        fps: 60
+        fps: 25
         keep_image: False

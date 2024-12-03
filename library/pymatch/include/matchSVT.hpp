@@ -52,6 +52,10 @@ namespace match
     //      if not consider this, set to 1(N, N)
     Mat matchSVT(Mat M_aff, List dimGroups, Mat M_constr, Mat M_obs, Control control)
     {
+		//#if defined(_OPENMP)
+		//	std::cout << "_OPENMP" << std::endl;
+		//#endif
+
         bool debug = (control["debug"] > 0.);
         int max_iter = int(control["maxIter"]);
         float tol = control["tol"];
@@ -136,6 +140,7 @@ namespace match
                 mu /= 2;
             }
         }
+		timer.toc("solving svt");
         if(debug){
 #ifdef _USE_OPENCV_
             timer.toc("solving svt");
@@ -145,6 +150,8 @@ namespace match
 #endif
         }
         return X;
+		//std::cout << "test" << std::endl;
+		//return M_aff;
     }
 
     Mat matchALS(Mat M_aff, List dimGroups, Mat M_constr, Mat M_obs, Control control)

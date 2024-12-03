@@ -147,7 +147,10 @@ class BaseTopDownModel(nn.Module):
     def infer(self, image, bbox, to_numpy=False, flips=None):
         if isinstance(image, str):
             image = cv2.imread(image)
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # image = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
+        # img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # img = cv2.cvtColor(image, cv2.COLOR_BayerBG2BGR)
+        img = image
         squeeze = False
         if len(bbox.shape) == 1:
             bbox = bbox[None]
@@ -217,8 +220,10 @@ class BaseTopDownModelCache(BaseTopDownModel):
         self.name = name
     
     def cachename(self, imgname):
-        basename = os.sep.join(imgname.split(os.sep)[-2:])
-        cachename = join(self.output, self.name, basename.replace('.jpg', '.pkl'))
+        basename = os.sep.join(imgname.split(os.sep)[-3:])
+        # basename = os.sep.join(imgname.split(os.sep)[-2:])
+        cachename = join(self.output, self.name, basename.replace('.bmp', '.pkl'))
+        #cachename = join(self.output, self.name, basename.replace('.jpg', '.pkl'))
         return cachename
 
     def dump(self, cachename, output):

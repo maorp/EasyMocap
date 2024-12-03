@@ -3,7 +3,7 @@ project(MATCHLR VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_CXX_FLAGS "-pthread -O3 -fPIC")
+set(CMAKE_CXX_FLAGS "-O2 -openmp")
 
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 

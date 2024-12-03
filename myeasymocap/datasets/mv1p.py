@@ -1,7 +1,7 @@
-from easymocap.mytools.camera_utils import read_cameras
+from easymocap.mytools.camera_utils import read_cameras, read_cameras_yoom
 from easymocap.mytools.debug_utils import log, myerror, mywarn
 from easymocap.mytools.file_utils import read_json
-from .basedata import ImageDataBase, read_mv_images, find_best_people, find_all_people
+from .basedata import ImageDataBase, read_mv_images, read_mv_images_yoom, find_best_people, find_all_people
 import os
 from os.path import join
 import numpy as np
@@ -101,14 +101,15 @@ class MVDataset(ImageDataBase):
         for key, value in reader.items():
             if key == 'images':
                 self.try_to_extract_images(root, value)
-                data, meta = read_mv_images(root, value['root'], value['ext'], subs)
+                # data, meta = read_mv_images(root, value['root'], value['ext'], subs)
+                data, meta = read_mv_images_yoom(root, value['root'], value['ext'], subs)
                 self.length = len(data)
             elif key == 'image_shape':
                 imgnames = self.infos['images'][0]
                 shapes = []
                 for imgname in imgnames:
-                    img = cv2.imread(imgname)
-                    height, width, _ = img.shape
+                    img = cv2.imread(imgname, cv2.IMREAD_GRAYSCALE)
+                    height, width = img.shape
                     log('[{}] sub {} shape {}'.format(self.__class__.__name__, imgname, img.shape))
                     shapes.append([height, width])
                 data = [shapes]
@@ -138,7 +139,8 @@ class MVDataset(ImageDataBase):
                 if 'with_sub' in value.keys():
                     raise NotImplementedError
                 else:
-                    cameras = read_cameras(os.path.join(root, value['root']))
+                    # cameras = read_cameras(os.path.join(root, value['root']))
+                    cameras = read_cameras_yoom(os.path.join(root, value['root']))
                     if 'remove_k3' in value.keys():
                         for cam, camera in cameras.items():
                             camera['dist'][:, 4] = 0.

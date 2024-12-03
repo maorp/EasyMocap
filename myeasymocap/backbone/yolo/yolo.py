@@ -46,7 +46,8 @@ class BaseYOLOv5:
     def check_cache(self, imgname):
         basename = os.path.basename(imgname)
         imgext = '.' + basename.split('.')[-1]
-        nv = imgname.split(os.sep)[-2]
+        #nv = imgname.split(os.sep)[-2]
+        nv = imgname.split(os.sep)[-3]
         cachename = join(self.output, self.name, nv, basename.replace(imgext, '.npy'))
         os.makedirs(os.path.dirname(cachename), exist_ok=True)
         if os.path.exists(cachename):
@@ -58,9 +59,12 @@ class BaseYOLOv5:
     def check_image(self, img_or_name):
         if isinstance(img_or_name, str):
             images = cv2.imread(img_or_name)
+            # images = cv2.imread(img_or_name, cv2.IMREAD_GRAYSCALE)
         else:
             images = img_or_name
-        images = cv2.cvtColor(images, cv2.COLOR_BGR2RGB)
+        # images = cv2.cvtColor(images, cv2.COLOR_BGR2RGB)
+        # images = cv2.cvtColor(images, cv2.COLOR_BayerBG2BGR)
+        # cv2.imwrite('f:/test.png', images)
         return images
     
     @torch.no_grad()

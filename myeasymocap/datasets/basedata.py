@@ -3,6 +3,7 @@ from os.path import join
 import numpy as np
 import cv2
 from easymocap.mytools.debug_utils import log, myerror, mywarn
+from easymocap.mytools import read_json
 
 class ImageDataBase:
     def __init__(self, root, subs, ranges, read_image) -> None:
@@ -53,6 +54,8 @@ class ImageDataBase:
         assert os.path.exists(imgname), "image {} not exists".format(imgname)
         sub = os.path.basename(os.path.dirname(imgname))
         img = cv2.imread(imgname)
+        # img = cv2.imread(imgname, cv2.IMREAD_GRAYSCALE)
+        # img = cv2.cvtColor(img, cv2.COLOR_BayerBG2RGB)
         if cameras is None:
             return img
         K, D = self.cameras[sub]['K'], self.cameras[sub]['dist']
@@ -65,6 +68,24 @@ class ImageDataBase:
         mapx, mapy = self.distortMap[sub]
         img = cv2.remap(img, mapx, mapy, cv2.INTER_NEAREST)
         return img
+    
+def read_mv_images_yoom(root, root_images, ext, subs):
+    # assert os.path.exists(os.path.join(root, root_images)), f'root {root}/{root_images} not exists'
+    calibrationJson = read_json(os.path.join(root, 'Calibration', 'calibration.json'))
+    imagefolders = [cam['metadata']['folder'] for cam in calibrationJson['cameras']]
+    if len(subs) == 0:
+        subs = sorted(imagefolders)
+    imagelists = []
+    log(f'Found {len(subs)} subjects in {root}')
+    for sub in subs:
+        images = sorted(os.listdir(os.path.join(root, sub, 'bayer')))
+        images = [os.path.join(root, sub, 'bayer' , image) for image in images if image.endswith(ext)]
+        log(f'  -> Found {len(images)} in {sub}.')
+        imagelists.append(images)
+    min_length = min([len(image) for image in imagelists])
+    log(f'  -> Min length: {min_length}')
+    imagenames = [[image[i] for image in imagelists] for i in range(min_length)]
+    return imagenames, {'subs': subs}
 
 def read_mv_images(root, root_images, ext, subs):
     assert os.path.exists(os.path.join(root, root_images)), f'root {root}/{root_images} not exists'

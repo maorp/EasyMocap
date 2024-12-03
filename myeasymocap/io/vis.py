@@ -49,7 +49,7 @@ class VisBase:
         else:
             vis = merge(vis)
         vis = cv2.resize(vis, None, fx=self.scale, fy=self.scale)
-        vis = add_logo(vis)
+        #vis = add_logo(vis)
         # TODO: 从输入的Meta里面读入图片名字
         outname = join(self.output, self.name, '{:06d}.jpg'.format(self.count))
         os.makedirs(os.path.dirname(outname), exist_ok=True)
@@ -258,7 +258,7 @@ class Vis2D(VisBase):
             else:
                 for pid in range(k2d.shape[0]):
                     plot_keypoints_auto(vis_, k2d[pid], pid=pid, use_limb_color=True)
-                    if bbox is not None:
-                        plot_bbox(vis_, bbox[nv][pid], pid=pid)
+                    # if bbox is not None:
+                    #     plot_bbox(vis_, bbox[nv][pid], pid=pid)
             vis.append(vis_)
         self.merge_and_write(vis)

@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import os
 from os.path import join
+from easymocap.mytools import read_json
+
 class FileStorage(object):
     def __init__(self, filename, isWrite=False):
         version = cv2.__version__
@@ -105,6 +107,50 @@ def write_extri(extri_name, cameras):
         extri.write('T_{}'.format(key), val['T'])
     return 0
 
+def read_camera_yoom(calib, cam_names=[]):
+    # assert os.path.exists(intri_name), intri_name
+    # assert os.path.exists(extri_name), extri_name
+
+    # intri = FileStorage(intri_name)
+    # extri = FileStorage(extri_name)
+    cams, P = {}, {}
+    cam_names = [] #intri.read('names', dt='list')
+    for camObj in calib:
+        cam = camObj['metadata']['folder']
+        cam_names.append(cam)
+        cams[cam] = {}
+        cams[cam]['K'] = np.array(camObj['K'], dtype=np.float64)#camObj['K']#intri.read('K_{}'.format( cam))
+        cams[cam]['invK'] = np.linalg.inv(cams[cam]['K'])
+        H = camObj['imageSize'][0]
+        W = camObj['imageSize'][1]
+        if H is None or W is None:
+            print('[camera] no H or W for {}'.format(cam))
+            H, W = -1, -1
+        cams[cam]['H'] = H
+        cams[cam]['W'] = W
+        R = np.linalg.inv(camObj['R']) #cv2.Rodrigues(Rvec)[0]
+        Rvec = cv2.Rodrigues(R)[0]
+        t = np.array(camObj['t'], dtype=np.float64).reshape(-1,1)
+        Tvec = np.matmul(-R, t) #extri.read('T_{}'.format(cam))
+        assert Rvec is not None, cam
+        RT = np.hstack((R, Tvec))
+
+        cams[cam]['RT'] = RT
+        cams[cam]['R'] = R
+        cams[cam]['Rvec'] = Rvec
+        cams[cam]['T'] = Tvec
+        cams[cam]['center'] = - Rvec.T @ Tvec
+        P[cam] = cams[cam]['K'] @ cams[cam]['RT']
+        cams[cam]['P'] = P[cam]
+
+        cams[cam]['dist'] = np.array([camObj['d'][0],camObj['d'][1],0,0,camObj['d'][2]]) #intri.read('dist_{}'.format(cam))
+        if cams[cam]['dist'] is None:
+            # cams[cam]['dist'] = intri.read('D_{}'.format(cam))
+            if cams[cam]['dist'] is None:
+                print('[camera] no dist for {}'.format(cam))
+    cams['basenames'] = cam_names
+    return cams
+
 def read_camera(intri_name, extri_name, cam_names=[]):
     assert os.path.exists(intri_name), intri_name
     assert os.path.exists(extri_name), extri_name
@@ -149,6 +195,15 @@ def read_camera(intri_name, extri_name, cam_names=[]):
 
 def read_cameras(path, intri='intri.yml', extri='extri.yml', subs=[]):
     cameras = read_camera(join(path, intri), join(path, extri))
+    cameras.pop('basenames')
+    if len(subs) > 0:
+        cameras = {key:cameras[key].astype(np.float32) for key in subs}
+    return cameras
+
+def read_cameras_yoom(path, intri='intri.yml', extri='extri.yml', subs=[]):
+    calibrationJson = read_json(os.path.join(path, 'Calibration', 'calibration.json'))
+    cams = sorted(calibrationJson['cameras'], key=lambda x: x['metadata']['folder'])
+    cameras = read_camera_yoom(cams)
     cameras.pop('basenames')
     if len(subs) > 0:
         cameras = {key:cameras[key].astype(np.float32) for key in subs}

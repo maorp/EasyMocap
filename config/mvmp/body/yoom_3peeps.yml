@@ -1,0 +1,44 @@
+data: config/datasets/mvimage_bmp.yml
+exp: config/mvmp/detect_match_triangulate.yml #_fitSMPL.yml
+data_opts:
+  root: TO_BE_FILLED
+  subs: ['D1_C_12M_022502060010', 'D2_C_12M_022502060012', 'D3_C_12M_022502060002', 'D4_C_12M_022502060016', 'D5_C_12M_022502060014', 'D6_C_12M_022502260007', 'D7_C_12M_022502060006', 'D8_C_12M_022502060008']
+  subs_vis: ['D1_C_12M_022502460078', 'D2_C_12M_022502060012', 'D2_C_12M_022502460081', 'D3_C_12M_022502060002'] #['D7_C_12M_022502260003']
+  ranges: [0, 1000, 1]
+exp_opts:
+  output: output/yoom_3peeps_0_1000_rtmol
+  at_step:
+    detect:
+      args:
+        min_length: 300
+        max_length: 2600
+    match:
+      args:
+        cfg_match:
+          distance:
+            threshold_track: 0.05
+          triangulate:
+            min_view: 3 # at least 3 views to triangulate
+            min_view_body: 5 # at least 5 views to triangulate
+            dist_max: 100 # pixel
+            dist_track: 150 # 100mm；
+        cfg_track:
+          max_person: 6
+          final_ranges: [[-3, -3, 0.], [3, 3, 3.]] # 最终的输出的range，仅用于输出的时候的筛选
+          final_max_person: 6
+  at_final:
+    collect:
+      args:
+        min_frame: 100
+    fitting_each_person:
+      args:
+        stages:
+          refine_poses:
+            args:
+              loss:
+                smooth:
+                  weight: 5.
+    vis_render:
+      args:
+        view_list: [2]
+        scale: 1.
